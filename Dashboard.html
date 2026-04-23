@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuickPOS — Dashboard</title>
+  <link rel="stylesheet" href="theme.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    .greeting { margin-bottom: 24px; }
+    .greeting-sub  { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+    .greeting-name { font-size: 26px; font-weight: 800; letter-spacing: -.03em; }
+    .greeting-name span { color: var(--accent); }
+
+    .quick-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 12px; margin-bottom: 24px; }
+    .qn-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 18px 16px; display: flex; flex-direction: column; gap: 12px;
+      cursor: pointer; text-decoration: none; transition: all .18s; box-shadow: var(--shadow-sm);
+    }
+    .qn-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); border-color: var(--accent); }
+    .qn-icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; }
+    .qn-green  { background: var(--accent-light); }
+    .qn-blue   { background: var(--info-light); }
+    .qn-orange { background: var(--warning-light); }
+    .qn-red    { background: var(--danger-light); }
+    .qn-purple { background: #ede9fe; }
+    .qn-label  { font-size: 14px; font-weight: 700; color: var(--text); }
+    .qn-sub    { font-size: 12px; color: var(--muted); }
+
+    .two-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-top: 20px; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+    .panel-title { font-size: 14px; font-weight: 700; }
+    .panel-link { font-size: 13px; color: var(--accent); font-weight: 600; text-decoration: none; }
+    .panel-link:hover { text-decoration: underline; }
+    .panel-body { padding: 18px 20px; }
+    .chart-wrap { height: 190px; }
+
+    .low-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+    .low-item:last-child { border-bottom: none; }
+    .low-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
+    .low-name { flex: 1; font-size: 14px; font-weight: 500; }
+    .low-qty  { font-size: 13px; font-weight: 600; color: var(--danger); }
+
+    .sale-row td:first-child { font-size: 13px; color: var(--muted); }
+    .role-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: .05em; }
+    .r-admin   { background: var(--accent-light); color: var(--accent-text); }
+    .r-manager { background: var(--info-light); color: #1e3a8a; }
+    .r-cashier { background: var(--warning-light); color: #78350f; }
+
+    .low-banner { display: none; margin-bottom: 16px; }
+    .low-banner.show { display: flex; }
+  </style>
+</head>
+<body>
+<nav class="top-nav">
+  <a class="nav-logo" href="dashboard.html">Quick<span>POS</span></a>
+  <span class="role-badge" id="role-badge" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em"></span>
+  <div class="nav-right">
+    <a class="nav-btn primary" href="pos.html">Open POS</a>
+    <a class="nav-link hide-mobile" href="reports.html">Reports</a>
+    <a class="nav-link hide-mobile" href="customers.html">Customers</a>
+    <button class="nav-btn danger" onclick="logout()">Sign out</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="greeting fade-up">
+    <div class="greeting-sub" id="greeting-time">Good morning</div>
+    <div class="greeting-name">Hello, <span id="greeting-name">—</span></div>
+  </div>
+
+  <div class="alert warning low-banner fade-up" id="low-banner">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
+      <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/>
+      <path d="M8 5v3.5M8 10.5v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+    </svg>
+    <span id="low-msg"></span>
+    <a href="reports.html" style="margin-left:auto;font-weight:600;color:inherit">View inventory →</a>
+  </div>
+
+  <div class="stat-grid fade-up fade-up-1">
+    <div class="stat-card">
+      <div class="stat-label">Today's revenue</div>
+      <div class="stat-value green" id="s-today">—</div>
+      <div class="stat-sub" id="s-today-ord">Loading…</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">All-time revenue</div>
+      <div class="stat-value" id="s-total">—</div>
+      <div class="stat-sub" id="s-total-ord">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Low stock alerts</div>
+      <div class="stat-value red" id="s-low">—</div>
+      <div class="stat-sub">below 5 units</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Products</div>
+      <div class="stat-value blue" id="s-products">—</div>
+      <div class="stat-sub">in catalogue</div>
+    </div>
+  </div>
+
+  <div class="quick-nav fade-up fade-up-2" style="margin-top:20px">
+    <a class="qn-card" href="pos.html">
+      <div class="qn-icon qn-green"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="5.5" width="15" height="12" rx="2" stroke="#16a34a" stroke-width="1.8"/><path d="M6.5 9.5h7M6.5 12.5h4.5" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round"/><path d="M10 5.5V4" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div><div class="qn-label">POS Terminal</div><div class="qn-sub">Process a sale</div></div>
+    </a>
+    <a class="qn-card" href="reports.html">
+      <div class="qn-icon qn-blue"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="2.5" width="15" height="15" rx="2" stroke="#2563eb" stroke-width="1.8"/><path d="M6 13l3-3.5 2.5 2.5 3.5-5" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div><div class="qn-label">Reports</div><div class="qn-sub">Sales & analytics</div></div>
+    </a>
+    <a class="qn-card" href="customers.html">
+      <div class="qn-icon qn-purple"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3.5" stroke="#7c3aed" stroke-width="1.8"/><path d="M3 17c0-3.5 3.1-6 7-6s7 2.5 7 6" stroke="#7c3aed" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div><div class="qn-label">Customers</div><div class="qn-sub">Manage & history</div></div>
+    </a>
+    <a class="qn-card" href="reports.html">
+      <div class="qn-icon qn-orange"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="9" width="15" height="9" rx="1.5" stroke="#d97706" stroke-width="1.8"/><rect x="5.5" y="5" width="9" height="5" rx="1" stroke="#d97706" stroke-width="1.8"/><path d="M8 5V3.5a2 2 0 014 0V5" stroke="#d97706" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+      <div><div class="qn-label">Inventory</div><div class="qn-sub">Stock levels</div></div>
+    </a>
+  </div>
+
+  <div class="two-col fade-up fade-up-3">
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Sales — last 7 days</div>
+        <a class="panel-link" href="reports.html">Full report →</a>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap"><canvas id="mini-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Low stock alerts</div>
+        <a class="panel-link" href="reports.html">View all →</a>
+      </div>
+      <div id="low-list">
+        <div class="empty-state" style="padding:28px"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="1.5"/><path d="M16 10v6.5M16 19.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Loading…</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel fade-up fade-up-4" style="margin-top:16px">
+    <div class="panel-head">
+      <div class="panel-title">Recent sales</div>
+      <a class="panel-link" href="reports.html">See all →</a>
+    </div>
+    <div id="recent-wrap">
+      <div class="empty-state"><span>Loading…</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = 'http://localhost:3000';
+  const token = localStorage.getItem('pos_token');
+  const user  = JSON.parse(localStorage.getItem('pos_user') || '{}');
+  if (!token) window.location.href = 'login.html';
+
+  const H = { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` };
+
+  // Greeting
+  const h = new Date().getHours();
+  document.getElementById('greeting-time').textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greeting-name').textContent = user.username || 'there';
+
+  const rb = document.getElementById('role-badge');
+  rb.textContent = user.role || '—';
+  rb.className = `role-badge r-${user.role || 'cashier'}`;
+
+  async function loadSummary() {
+    try {
+      const d = await (await fetch(`${API}/reports/summary`, {headers:H})).json();
+      const s = d.data;
+      document.getElementById('s-today').textContent     = `GH₵ ${parseFloat(s.today_revenue).toFixed(2)}`;
+      document.getElementById('s-today-ord').textContent = `${s.today_orders} orders today`;
+      document.getElementById('s-total').textContent     = `GH₵ ${parseFloat(s.all_time_revenue).toFixed(2)}`;
+      document.getElementById('s-total-ord').textContent = `${s.all_time_orders} total orders`;
+      document.getElementById('s-low').textContent       = s.low_stock_count;
+      if (s.low_stock_count > 0) {
+        document.getElementById('low-banner').classList.add('show');
+        document.getElementById('low-msg').textContent = `${s.low_stock_count} item${s.low_stock_count>1?'s are':' is'} running low on stock.`;
+      }
+    } catch {}
+  }
+
+  async function loadProducts() {
+    try {
+      const d = await (await fetch(`${API}/products`, {headers:H})).json();
+      document.getElementById('s-products').textContent = (d.data||[]).length;
+    } catch {}
+  }
+
+  async function loadChart() {
+    try {
+      const d = await (await fetch(`${API}/reports/daily-sales?days=7`, {headers:H})).json();
+      const rows = d.data || [];
+      Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+      Chart.defaults.font.size = 11;
+      Chart.defaults.plugins.legend.display = false;
+      new Chart(document.getElementById('mini-chart'), {
+        type: 'bar',
+        data: {
+          labels: rows.map(r => new Date(r.sale_date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})),
+          datasets: [{ data: rows.map(r => Number(r.total_revenue)), backgroundColor: '#dcfce7', borderColor: '#16a34a', borderWidth: 2, borderRadius: 6, hoverBackgroundColor: '#bbf7d0' }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { tooltip: { callbacks: { label: c => ` GH₵ ${c.parsed.y.toFixed(2)}` }, backgroundColor:'#111827', padding:10, cornerRadius:8 }},
+          scales: { x: { grid: { display:false }}, y: { grid: { color:'#f3f4f6' }, ticks: { callback: v => `GH₵${v}` }}}
+        }
+      });
+    } catch {}
+  }
+
+  async function loadLowStock() {
+    try {
+      const d = await (await fetch(`${API}/reports/inventory`, {headers:H})).json();
+      const low = (d.data||[]).filter(p => p.low_stock).slice(0,8);
+      const wrap = document.getElementById('low-list');
+      if (!low.length) { wrap.innerHTML = `<div class="empty-state" style="padding:28px"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 6l10 18H6L16 6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M16 13v5M16 21v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>All stock levels are healthy</span></div>`; return; }
+      wrap.innerHTML = low.map(p => `<div class="low-item"><div class="low-dot"></div><div class="low-name">${p.product_name}</div><div class="low-qty">${p.stock} left</div></div>`).join('');
+    } catch {}
+  }
+
+  async function loadRecent() {
+    try {
+      const d = await (await fetch(`${API}/sales`, {headers:H})).json();
+      const sales = (d.data||[]).slice(0,8);
+      if (!sales.length) { document.getElementById('recent-wrap').innerHTML = `<div class="empty-state"><span>No sales yet</span></div>`; return; }
+      document.getElementById('recent-wrap').innerHTML = `
+        <div class="table-wrap" style="border:none;border-radius:0">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Cashier</th><th>Customer</th><th>Amount</th><th>Date</th></tr></thead>
+          <tbody>${sales.map(s => `<tr>
+            <td>#${s.sale_id}</td>
+            <td>${s.cashier||'—'}</td>
+            <td>${s.customer||'<span style="color:var(--subtle)">Walk-in</span>'}</td>
+            <td><strong style="color:var(--accent)">GH₵ ${parseFloat(s.total_amount).toFixed(2)}</strong></td>
+            <td style="color:var(--muted)">${new Date(s.created_at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+          </tr>`).join('')}</tbody>
+        </table></div>`;
+    } catch {}
+  }
+
+  function logout() { localStorage.removeItem('pos_token'); localStorage.removeItem('pos_user'); window.location.href = 'login.html'; }
+
+  loadSummary(); loadProducts(); loadChart(); loadLowStock(); loadRecent();
+</script>
+</body>
+</html>

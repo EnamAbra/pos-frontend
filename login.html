@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuickPOS — Sign in</title>
+  <link rel="stylesheet" href="theme.css"/>
+  <style>
+    html, body { height: 100%; display: flex; align-items: center; justify-content: center; }
+    .login-wrap { width: 100%; max-width: 420px; padding: 20px; }
+    .login-card { background: var(--surface); border-radius: var(--radius-xl); border: 1px solid var(--border); padding: 36px 32px; box-shadow: var(--shadow-lg); animation: fadeUp .4s ease; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
+    .brand-icon { width: 46px; height: 46px; background: var(--accent); border-radius: 14px; display: grid; place-items: center; flex-shrink: 0; }
+    .brand-name { font-size: 20px; font-weight: 800; letter-spacing: -.04em; }
+    .brand-name span { color: var(--accent); }
+    .login-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    .login-sub   { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+    .pw-wrap { position: relative; }
+    .pw-wrap .input { padding-right: 50px; }
+    .eye-btn { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--subtle); padding: 4px; transition: color .15s; }
+    .eye-btn:hover { color: var(--text); }
+    .field + .field { margin-top: 16px; }
+    .login-btn { margin-top: 24px; }
+    .err-msg { display: none; margin-top: 14px; }
+    .err-msg.show { display: flex; }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 24px 0 16px; color: var(--subtle); font-size: 12px; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .quick-fill { display: flex; gap: 8px; }
+    .qf-btn { flex: 1; padding: 10px 6px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-hi); background: var(--surface2); font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .15s; }
+    .qf-btn:hover, .qf-btn.active { border-color: var(--accent); color: var(--accent-text); background: var(--accent-light); }
+    .login-help { font-size: 12px; color: var(--subtle); text-align: center; margin-top: 16px; }
+  </style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="6" width="18" height="15" rx="2.5" stroke="white" stroke-width="2"/>
+          <path d="M8 11h8M8 15h5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 6V4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="brand-name">Quick<span>POS</span></div>
+    </div>
+
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">Sign in to access your point of sale system</div>
+
+    <div class="field">
+      <label for="username">Username</label>
+      <input class="input" type="text" id="username" placeholder="Enter your username" autocomplete="username"/>
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="pw-wrap">
+        <input class="input" type="password" id="password" placeholder="Enter your password" autocomplete="current-password"/>
+        <button class="eye-btn" type="button" onclick="togglePw()">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M2 10s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full btn-lg login-btn" id="login-btn" onclick="doLogin()">
+      <div class="spinner"></div>
+      <span class="btn-label">Sign in</span>
+    </button>
+
+    <div class="alert error err-msg" id="err-msg">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px">
+        <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M8 5v3.5M8 10.5v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <span id="err-text">Error</span>
+    </div>
+
+    <div class="divider">Quick fill for testing</div>
+    <div class="quick-fill">
+      <button class="qf-btn" onclick="fillRole('admin',this)">Admin</button>
+      <button class="qf-btn" onclick="fillRole('manager',this)">Manager</button>
+      <button class="qf-btn" onclick="fillRole('cashier',this)">Cashier</button>
+    </div>
+    <div class="login-help">Uses credentials registered in your database</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API = 'http://localhost:3000';
+  if (localStorage.getItem('pos_token')) window.location.href = 'dashboard.html';
+
+  function togglePw() {
+    const pw = document.getElementById('password');
+    pw.type = pw.type === 'password' ? 'text' : 'password';
+  }
+
+  function fillRole(role, btn) {
+    document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('username').value = role + '1';
+    document.getElementById('password').value = 'password123';
+  }
+
+  function showErr(msg) {
+    document.getElementById('err-text').textContent = msg;
+    document.getElementById('err-msg').classList.add('show');
+  }
+
+  async function doLogin() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    document.getElementById('err-msg').classList.remove('show');
+    if (!username || !password) { showErr('Please fill in both fields.'); return; }
+    const btn = document.getElementById('login-btn');
+    btn.classList.add('loading'); btn.disabled = true;
+    try {
+      const res  = await fetch(`${API}/auth/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username,password}) });
+      const data = await res.json();
+      if (!res.ok) { showErr(data.message || 'Login failed.'); return; }
+      localStorage.setItem('pos_token', data.token);
+      localStorage.setItem('pos_user',  JSON.stringify(data.user));
+      window.location.href = 'dashboard.html';
+    } catch { showErr('Cannot connect to server. Is it running on port 3000?'); }
+    finally { btn.classList.remove('loading'); btn.disabled = false; }
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>

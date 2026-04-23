@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuickPOS — Reports</title>
+  <link rel="stylesheet" href="theme.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    .range-pills { display: flex; gap: 8px; }
+    .range-pill { padding: 8px 18px; border-radius: 99px; border: 1.5px solid var(--border-hi); font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted); background: var(--surface); cursor: pointer; transition: all .15s; }
+    .range-pill.active, .range-pill:hover { border-color: var(--accent); color: var(--accent-text); background: var(--accent-light); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+    .panel-title { font-size: 14px; font-weight: 700; }
+    .panel-badge { font-size: 12px; padding: 3px 10px; border-radius: 99px; background: var(--accent-light); color: var(--accent-text); font-weight: 600; }
+    .panel-body  { padding: 20px; }
+    .chart-wrap  { height: 220px; }
+
+    .rank { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+    .rank.gold   { background: #fef9c3; color: #713f12; border: 1px solid #fcd34d; }
+    .rank.silver { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .rank.bronze { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+    .rank.plain  { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+    .bar-spark { display: flex; align-items: center; gap: 10px; }
+    .bar-track  { flex: 1; height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+    .bar-fill   { height: 100%; border-radius: 99px; background: var(--accent); transition: width .6s cubic-bezier(.22,1,.36,1); }
+    .bar-fill.red { background: var(--danger); }
+
+    .export-bar { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border); background: var(--surface2); }
+    .exp-btn { padding: 8px 16px; border-radius: var(--radius-sm); border: 1.5px solid var(--border-hi); background: var(--surface); font-family: inherit; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .15s; }
+    .exp-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .stock-ok  { color: var(--accent); }
+    .stock-low { color: var(--danger); }
+    .status-badge { font-size: 12px; padding: 3px 10px; border-radius: 99px; font-weight: 600; }
+    .status-ok  { background: var(--success-light); color: var(--accent-text); border: 1px solid #86efac; }
+    .status-low { background: var(--danger-light);  color: #7f1d1d; border: 1px solid #fca5a5; }
+  </style>
+</head>
+<body>
+<nav class="top-nav">
+  <a class="nav-logo" href="dashboard.html">Quick<span>POS</span></a>
+  <span style="font-size:13px;color:var(--muted);font-weight:600">Reports</span>
+  <div class="nav-right">
+    <a class="nav-link hide-mobile" href="pos.html">POS</a>
+    <a class="nav-link hide-mobile" href="customers.html">Customers</a>
+    <a class="nav-link hide-mobile" href="dashboard.html">Dashboard</a>
+    <button class="nav-btn danger" onclick="logout()">Sign out</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:24px" class="fade-up">
+    <div>
+      <div style="font-size:13px;color:var(--muted);font-weight:500;margin-bottom:4px">Analytics overview</div>
+      <div style="font-size:24px;font-weight:800;letter-spacing:-.03em">Reports</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px" id="date-sub">—</div>
+    </div>
+    <div class="range-pills">
+      <button class="range-pill" onclick="setRange(7,this)">7 days</button>
+      <button class="range-pill active" onclick="setRange(14,this)">14 days</button>
+      <button class="range-pill" onclick="setRange(30,this)">30 days</button>
+    </div>
+  </div>
+
+  <div class="stat-grid fade-up fade-up-1" style="margin-bottom:20px">
+    <div class="stat-card"><div class="stat-label">Today's revenue</div><div class="stat-value green" id="s-today">—</div><div class="stat-sub" id="s-today-ord">—</div></div>
+    <div class="stat-card"><div class="stat-label">All-time revenue</div><div class="stat-value" id="s-total">—</div><div class="stat-sub" id="s-total-ord">—</div></div>
+    <div class="stat-card"><div class="stat-label">Low stock items</div><div class="stat-value red" id="s-low">—</div><div class="stat-sub">below 5 units</div></div>
+    <div class="stat-card"><div class="stat-label">Period orders</div><div class="stat-value blue" id="s-period">—</div><div class="stat-sub" id="s-period-rev">—</div></div>
+  </div>
+
+  <div class="two-col fade-up fade-up-2">
+    <div class="panel" style="margin-bottom:0">
+      <div class="panel-head"><div class="panel-title">Daily sales</div><span class="panel-badge" id="chart-badge">14 days</span></div>
+      <div class="panel-body"><div class="chart-wrap"><canvas id="daily-chart"></canvas></div></div>
+      <div class="export-bar"><button class="exp-btn" onclick="exportCSV('daily')">Export CSV</button></div>
+    </div>
+    <div class="panel" style="margin-bottom:0">
+      <div class="panel-head"><div class="panel-title">Top products</div><span class="panel-badge" id="top-badge">—</span></div>
+      <div class="panel-body"><div class="chart-wrap"><canvas id="top-chart"></canvas></div></div>
+    </div>
+  </div>
+
+  <div class="panel fade-up fade-up-3" style="margin-top:16px">
+    <div class="panel-head"><div class="panel-title">Top selling products</div><span class="panel-badge" id="top-table-badge">—</span></div>
+    <div id="top-table-body"><div class="empty-state"><span>Loading…</span></div></div>
+  </div>
+
+  <div class="panel fade-up fade-up-4">
+    <div class="panel-head"><div class="panel-title">Inventory levels</div><span class="panel-badge" id="inv-badge">—</span></div>
+    <div id="inv-table-body"><div class="empty-state"><span>Loading…</span></div></div>
+    <div class="export-bar"><button class="exp-btn" onclick="exportCSV('inventory')">Export inventory CSV</button></div>
+  </div>
+
+</div>
+
+<script>
+  const API   = 'http://localhost:3000';
+  const token = localStorage.getItem('pos_token');
+  if (!token) window.location.href = 'login.html';
+  const H = { 'Content-Type':'application/json','Authorization':`Bearer ${token}` };
+
+  let currentDays=14, dailyData=[], topData=[], inventoryData=[], dailyChart, topChart;
+
+  Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+  Chart.defaults.font.size   = 11;
+  Chart.defaults.plugins.legend.display = false;
+
+  function updateDateSub(){
+    const now=new Date(),from=new Date(now);from.setDate(from.getDate()-currentDays);
+    document.getElementById('date-sub').textContent=`${from.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} — ${now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`;
+  }
+
+  function setRange(days,btn){
+    currentDays=days;
+    document.querySelectorAll('.range-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+    document.getElementById('chart-badge').textContent=`${days} days`;
+    updateDateSub();loadDailySales();loadTopProducts();
+  }
+
+  async function init(){
+    updateDateSub();
+    await Promise.all([loadSummary(),loadDailySales(),loadTopProducts(),loadInventory()]);
+  }
+
+  async function loadSummary(){
+    try{
+      const d=await(await fetch(`${API}/reports/summary`,{headers:H})).json();const s=d.data;
+      document.getElementById('s-today').textContent=`GH₵ ${parseFloat(s.today_revenue).toFixed(2)}`;
+      document.getElementById('s-today-ord').textContent=`${s.today_orders} orders today`;
+      document.getElementById('s-total').textContent=`GH₵ ${parseFloat(s.all_time_revenue).toFixed(2)}`;
+      document.getElementById('s-total-ord').textContent=`${s.all_time_orders} total orders`;
+      document.getElementById('s-low').textContent=s.low_stock_count;
+    }catch{}
+  }
+
+  async function loadDailySales(){
+    try{
+      const d=await(await fetch(`${API}/reports/daily-sales?days=${currentDays}`,{headers:H})).json();
+      dailyData=d.data||[];
+      const pOrders=dailyData.reduce((s,r)=>s+Number(r.total_orders),0);
+      const pRev=dailyData.reduce((s,r)=>s+Number(r.total_revenue),0);
+      document.getElementById('s-period').textContent=pOrders;
+      document.getElementById('s-period-rev').textContent=`GH₵ ${pRev.toFixed(2)} revenue`;
+      renderDailyChart();
+    }catch{}
+  }
+
+  function renderDailyChart(){
+    if(dailyChart) dailyChart.destroy();
+    dailyChart=new Chart(document.getElementById('daily-chart'),{
+      type:'bar',
+      data:{
+        labels:dailyData.map(r=>new Date(r.sale_date).toLocaleDateString('en-GB',{day:'numeric',month:'short'})),
+        datasets:[{data:dailyData.map(r=>Number(r.total_revenue)),backgroundColor:'#dcfce7',borderColor:'#16a34a',borderWidth:2,borderRadius:6,hoverBackgroundColor:'#bbf7d0'}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{tooltip:{callbacks:{label:c=>` GH₵ ${c.parsed.y.toFixed(2)}`},backgroundColor:'#111827',padding:10,cornerRadius:8}},scales:{x:{grid:{display:false}},y:{grid:{color:'#f3f4f6'},ticks:{callback:v=>`GH₵${v}`}}}}
+    });
+  }
+
+  async function loadTopProducts(){
+    document.getElementById('top-table-body').innerHTML='<div class="empty-state"><span>Loading…</span></div>';
+    try{
+      const d=await(await fetch(`${API}/reports/top-products?limit=10`,{headers:H})).json();
+      topData=d.data||[];
+      document.getElementById('top-badge').textContent=`Top ${topData.length}`;
+      document.getElementById('top-table-badge').textContent=`${topData.length} products`;
+      renderTopChart();renderTopTable();
+    }catch{}
+  }
+
+  function renderTopChart(){
+    const top5=topData.slice(0,5);
+    if(topChart) topChart.destroy();
+    topChart=new Chart(document.getElementById('top-chart'),{
+      type:'doughnut',
+      data:{labels:top5.map(p=>p.product_name.length>14?p.product_name.slice(0,13)+'…':p.product_name),datasets:[{data:top5.map(p=>Number(p.total_sold)),backgroundColor:['#16a34a','#4ade80','#86efac','#bbf7d0','#dcfce7'],borderColor:'#fff',borderWidth:3,hoverOffset:6}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:true,position:'right',labels:{color:'#6b7280',font:{size:11},boxWidth:10,padding:10}},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed} units`},backgroundColor:'#111827',padding:10,cornerRadius:8}}}
+    });
+  }
+
+  function renderTopTable(){
+    if(!topData.length){document.getElementById('top-table-body').innerHTML='<div class="empty-state"><span>No sales data yet</span></div>';return;}
+    const maxSold=Math.max(...topData.map(p=>Number(p.total_sold)));
+    document.getElementById('top-table-body').innerHTML=`
+      <div class="table-wrap" style="border:none;border-radius:0;box-shadow:none">
+      <table class="data-table">
+        <thead><tr><th style="width:40px">#</th><th>Product</th><th>Category</th><th>Units sold</th><th>Revenue</th></tr></thead>
+        <tbody>${topData.map((p,i)=>`<tr>
+          <td><span class="rank ${i===0?'gold':i===1?'silver':i===2?'bronze':'plain'}">${i+1}</span></td>
+          <td><strong>${p.product_name}</strong></td>
+          <td><span style="font-size:12px;color:var(--muted)">${p.category||'—'}</span></td>
+          <td><div class="bar-spark"><div class="bar-track"><div class="bar-fill" style="width:${(Number(p.total_sold)/maxSold*100).toFixed(1)}%"></div></div><span style="min-width:28px;text-align:right;font-weight:600">${p.total_sold}</span></div></td>
+          <td><strong style="color:var(--accent)">GH₵ ${parseFloat(p.total_revenue).toFixed(2)}</strong></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+  }
+
+  async function loadInventory(){
+    try{
+      const d=await(await fetch(`${API}/reports/inventory`,{headers:H})).json();
+      inventoryData=d.data||[];
+      const low=inventoryData.filter(p=>p.low_stock).length;
+      document.getElementById('inv-badge').textContent=`${inventoryData.length} products · ${low} low`;
+      const maxStock=Math.max(...inventoryData.map(p=>Number(p.stock)),1);
+      document.getElementById('inv-table-body').innerHTML=!inventoryData.length?'<div class="empty-state"><span>No inventory data</span></div>':`
+        <div class="table-wrap" style="border:none;border-radius:0;box-shadow:none">
+        <table class="data-table">
+          <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock level</th><th>Status</th></tr></thead>
+          <tbody>${inventoryData.map(p=>`<tr>
+            <td><strong>${p.product_name}</strong></td>
+            <td><span style="font-size:12px;color:var(--muted)">${p.category||'—'}</span></td>
+            <td style="color:var(--accent);font-weight:600">GH₵ ${parseFloat(p.price).toFixed(2)}</td>
+            <td><div class="bar-spark"><div class="bar-track"><div class="bar-fill ${p.low_stock?'red':''}" style="width:${Math.min(Number(p.stock)/maxStock*100,100).toFixed(1)}%"></div></div><span style="min-width:28px;text-align:right;font-weight:600;color:${p.low_stock?'var(--danger)':'var(--text)'}">${p.stock}</span></div></td>
+            <td><span class="status-badge ${p.low_stock?'status-low':'status-ok'}">${p.low_stock?'Low stock':'OK'}</span></td>
+          </tr>`).join('')}</tbody>
+        </table></div>`;
+    }catch{}
+  }
+
+  function exportCSV(type){
+    let csv='',filename='';
+    if(type==='daily'){csv='Date,Orders,Revenue,Avg Order\n'+dailyData.map(r=>`${r.sale_date},${r.total_orders},${Number(r.total_revenue).toFixed(2)},${Number(r.avg_order_value).toFixed(2)}`).join('\n');filename=`daily-sales-${currentDays}days.csv`;}
+    if(type==='inventory'){csv='Product,Category,Price,Stock,Status\n'+inventoryData.map(p=>`"${p.product_name}","${p.category||''}",${Number(p.price).toFixed(2)},${p.stock},${p.low_stock?'Low':'OK'}`).join('\n');filename='inventory.csv';}
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=filename;a.click();
+  }
+
+  function logout(){localStorage.removeItem('pos_token');localStorage.removeItem('pos_user');window.location.href='login.html';}
+  init();
+</script>
+</body>
+</html>
