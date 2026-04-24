@@ -126,7 +126,7 @@
       localStorage.setItem('pos_token', data.token);
       localStorage.setItem('pos_user',  JSON.stringify(data.user));
       window.location.href = 'dashboard.html';
-    } catch { showErr('Cannot connect to server. Is it running on port 3000?'); }
+    } catch (err) { showErr(err.message ); }
     finally { btn.classList.remove('loading'); btn.disabled = false; }
   }
 
