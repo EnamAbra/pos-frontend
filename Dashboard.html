@@ -57,12 +57,12 @@
 </head>
 <body>
 <nav class="top-nav">
-  <a class="nav-logo" href="dashboard.html">Quick<span>POS</span></a>
+  <a class="nav-logo" href="Dashboard.html">Quick<span>POS</span></a>
   <span class="role-badge" id="role-badge" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em"></span>
   <div class="nav-right">
     <a class="nav-btn primary" href="pos.html">Open POS</a>
-    <a class="nav-link hide-mobile" href="reports.html">Reports</a>
-    <a class="nav-link hide-mobile" href="customers.html">Customers</a>
+    <a class="nav-link hide-mobile" href="Reports.html">Reports</a>
+    <a class="nav-link hide-mobile" href="Customers.html">Customers</a>
     <button class="nav-btn danger" onclick="logout()">Sign out</button>
   </div>
 </nav>
@@ -80,7 +80,7 @@
       <path d="M8 5v3.5M8 10.5v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
     </svg>
     <span id="low-msg"></span>
-    <a href="reports.html" style="margin-left:auto;font-weight:600;color:inherit">View inventory →</a>
+    <a href="Reports.html" style="margin-left:auto;font-weight:600;color:inherit">View inventory →</a>
   </div>
 
   <div class="stat-grid fade-up fade-up-1">
@@ -111,15 +111,15 @@
       <div class="qn-icon qn-green"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="5.5" width="15" height="12" rx="2" stroke="#16a34a" stroke-width="1.8"/><path d="M6.5 9.5h7M6.5 12.5h4.5" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round"/><path d="M10 5.5V4" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round"/></svg></div>
       <div><div class="qn-label">POS Terminal</div><div class="qn-sub">Process a sale</div></div>
     </a>
-    <a class="qn-card" href="reports.html">
+    <a class="qn-card" href="Reports.html">
       <div class="qn-icon qn-blue"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="2.5" width="15" height="15" rx="2" stroke="#2563eb" stroke-width="1.8"/><path d="M6 13l3-3.5 2.5 2.5 3.5-5" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div><div class="qn-label">Reports</div><div class="qn-sub">Sales & analytics</div></div>
     </a>
-    <a class="qn-card" href="customers.html">
+    <a class="qn-card" href="Customers.html">
       <div class="qn-icon qn-purple"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3.5" stroke="#7c3aed" stroke-width="1.8"/><path d="M3 17c0-3.5 3.1-6 7-6s7 2.5 7 6" stroke="#7c3aed" stroke-width="1.8" stroke-linecap="round"/></svg></div>
       <div><div class="qn-label">Customers</div><div class="qn-sub">Manage & history</div></div>
     </a>
-    <a class="qn-card" href="reports.html">
+    <a class="qn-card" href="Reports.html">
       <div class="qn-icon qn-orange"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="9" width="15" height="9" rx="1.5" stroke="#d97706" stroke-width="1.8"/><rect x="5.5" y="5" width="9" height="5" rx="1" stroke="#d97706" stroke-width="1.8"/><path d="M8 5V3.5a2 2 0 014 0V5" stroke="#d97706" stroke-width="1.8" stroke-linecap="round"/></svg></div>
       <div><div class="qn-label">Inventory</div><div class="qn-sub">Stock levels</div></div>
     </a>
@@ -129,7 +129,7 @@
     <div class="panel">
       <div class="panel-head">
         <div class="panel-title">Sales — last 7 days</div>
-        <a class="panel-link" href="reports.html">Full report →</a>
+        <a class="panel-link" href="Reports.html">Full report →</a>
       </div>
       <div class="panel-body">
         <div class="chart-wrap"><canvas id="mini-chart"></canvas></div>
@@ -138,7 +138,7 @@
     <div class="panel">
       <div class="panel-head">
         <div class="panel-title">Low stock alerts</div>
-        <a class="panel-link" href="reports.html">View all →</a>
+        <a class="panel-link" href="Reports.html">View all →</a>
       </div>
       <div id="low-list">
         <div class="empty-state" style="padding:28px"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="1.5"/><path d="M16 10v6.5M16 19.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Loading…</span></div>
@@ -149,7 +149,7 @@
   <div class="panel fade-up fade-up-4" style="margin-top:16px">
     <div class="panel-head">
       <div class="panel-title">Recent sales</div>
-      <a class="panel-link" href="reports.html">See all →</a>
+      <a class="panel-link" href="Reports.html">See all →</a>
     </div>
     <div id="recent-wrap">
       <div class="empty-state"><span>Loading…</span></div>
