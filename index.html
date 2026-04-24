@@ -93,7 +93,7 @@
 
 <script>
   const API = 'https://pos-backend-6p7v.onrender.com';
-  if (localStorage.getItem('pos_token')) window.location.href = './dashboard.html';
+  if (localStorage.getItem('pos_token')) window.location.href = '/dashboard.html';
 
   function togglePw() {
     const pw = document.getElementById('password');
@@ -125,7 +125,7 @@
       if (!res.ok) { showErr(data.message || 'Login failed.'); return; }
       localStorage.setItem('pos_token', data.token);
       localStorage.setItem('pos_user',  JSON.stringify(data.user));
-      window.location.href = 'dashboard.html';
+      window.location.href = '/dashboard.html';
     } catch (err) { showErr(err.message ); }
     finally { btn.classList.remove('loading'); btn.disabled = false; }
   }
